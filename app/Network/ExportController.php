@@ -88,18 +88,26 @@ final class ExportController
 
     public function start(WP_REST_Request $req): WP_REST_Response
     {
-        @set_time_limit(0);
-
-        // Force error output for debugging
-        if (defined('WP_DEBUG') && WP_DEBUG) {
-            error_reporting(E_ALL);
-            ini_set('display_errors', '1');
-        }
+        // Start output buffering to catch any stray output
+        ob_start();
 
         try {
+            @set_time_limit(0);
+
+            // Log that we received the request
+            error_log('Network export start called');
+
+            // Force error output for debugging
+            if (defined('WP_DEBUG') && WP_DEBUG) {
+                error_reporting(E_ALL);
+                ini_set('display_errors', '1');
+            }
+
             $body  = $req->get_json_params();
+            error_log('Request body: ' . print_r($body, true));
 
             if (!is_array($body) || empty($body)) {
+                ob_end_clean();
                 return new WP_REST_Response([
                     'error' => 'invalid_request',
                     'message' => 'Invalid request body.',
@@ -107,8 +115,10 @@ final class ExportController
             }
 
             $ids = is_array($body['site_ids'] ?? null) ? array_map('intval', $body['site_ids']) : [];
+            error_log('Site IDs to export: ' . implode(', ', $ids));
 
             if (empty($ids)) {
+                ob_end_clean();
                 return new WP_REST_Response([
                     'error' => 'no_sites_selected',
                     'message' => 'Please select at least one site to export.',
@@ -119,6 +129,7 @@ final class ExportController
             foreach ($ids as $id) {
                 $site = get_site($id);
                 if (!$site) {
+                    ob_end_clean();
                     return new WP_REST_Response([
                         'error' => 'invalid_site',
                         'message' => "Site ID {$id} does not exist.",
@@ -126,14 +137,21 @@ final class ExportController
                 }
             }
 
+            error_log('Starting export...');
             $result = Exporter::start($ids);
+            error_log('Export started successfully');
 
             if (isset($result['error'])) {
+                ob_end_clean();
                 return new WP_REST_Response($result, 400);
             }
 
+            ob_end_clean();
             return new WP_REST_Response($result);
         } catch (\Throwable $e) {
+            // Discard any buffered output
+            ob_end_clean();
+
             // Log the error for debugging
             if (function_exists('error_log')) {
                 error_log('Network export start failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
