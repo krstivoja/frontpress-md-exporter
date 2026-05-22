@@ -21,6 +21,12 @@ final class ExportController
             ],
         ];
 
+        register_rest_route(Plugin::REST_NAMESPACE, '/network/test', [
+            'methods'             => WP_REST_Server::CREATABLE,
+            'callback'            => [$this, 'test'],
+            'permission_callback' => [Auth::class, 'canManageNetwork'],
+        ]);
+
         register_rest_route(Plugin::REST_NAMESPACE, '/network/sites', [
             'methods'             => WP_REST_Server::READABLE,
             'callback'            => [$this, 'sites'],
@@ -159,16 +165,26 @@ final class ExportController
             }
 
             error_log('Creating WP_REST_Response object');
-            $response = new WP_REST_Response($result, 200);
 
-            // Set explicit headers to prevent caching/buffering issues
-            $response->header('Content-Type', 'application/json; charset=UTF-8');
-            $response->header('Cache-Control', 'no-cache, must-revalidate, max-age=0');
-            $response->header('X-Content-Type-Options', 'nosniff');
-            $response->header('X-Debug-Size', strlen($json));
+            // WORKAROUND: Send response immediately to bypass server buffering
+            status_header(200);
+            header('Content-Type: application/json; charset=UTF-8');
+            header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
+            header('Pragma: no-cache');
+            header('X-Debug-Size: ' . strlen($json));
+            header('Content-Length: ' . strlen($json));
 
-            error_log('About to return response with headers');
-            return $response;
+            error_log('Sending JSON directly: ' . strlen($json) . ' bytes');
+            echo $json;
+            flush();
+
+            if (function_exists('fastcgi_finish_request')) {
+                error_log('Calling fastcgi_finish_request()');
+                fastcgi_finish_request();
+            }
+
+            error_log('Response sent, exiting');
+            exit;
         } catch (\Throwable $e) {
             // Discard any buffered output
             ob_end_clean();
