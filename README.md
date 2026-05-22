@@ -1,205 +1,229 @@
 # FrontPress MD Exporter
 
-Export WordPress sites to Markdown files with front matter, taxonomies, ACF fields, and media — perfect for static site generators, documentation systems, or content migrations.
+**Transform your WordPress content into production-ready Markdown files.**
+
+Perfect for migrating to static site generators (Hugo, Jekyll, Next.js), building documentation systems, or creating content backups. Export posts, pages, custom post types, taxonomies, ACF fields, and media — all organized and ready to use.
+
+---
+
+## Why FrontPress MD Exporter?
+
+✅ **Clean Markdown Output** - WordPress content converted to properly formatted Markdown with YAML front matter
+✅ **Preserves Everything** - Posts, pages, custom post types, taxonomies, custom fields, and media
+✅ **ACF Ready** - Full Advanced Custom Fields support with automatic field type detection
+✅ **Multisite Support** - Export entire WordPress networks with per-site organization
+✅ **Smart Media Handling** - Automatic media collection, URL rewriting, and proper folder structure
+✅ **Flexible Configuration** - Map fields, taxonomies, and post types exactly how you need them
+✅ **One-Click Download** - Get everything in a single, organized ZIP file
+
+---
+
+## Use Cases
+
+### 🚀 Migrate to Static Site Generators
+Export your WordPress content to Markdown and move to Hugo, Jekyll, Gatsby, or Next.js. Front matter is automatically formatted for static site generators.
+
+### 📚 Create Documentation Systems
+Export documentation, knowledge bases, or help centers to Markdown for use with Docusaurus, MkDocs, or VuePress.
+
+### 💾 Content Backups
+Create human-readable, version-controllable backups of your WordPress content. No more database exports — just clean Markdown files.
+
+### 🔄 Content Migrations
+Move content between WordPress sites, platforms, or systems. Export once, import anywhere.
+
+---
 
 ## Features
 
-- 📝 **Markdown Export** - Convert WordPress posts, pages, and custom post types to clean Markdown with YAML front matter
-- 🏷️ **Taxonomies** - Export categories, tags, and custom taxonomies
-- 🎨 **ACF Support** - Full Advanced Custom Fields integration with field mapping
-- 📸 **Media Handling** - Automatic media collection and URL rewriting
-- 🔧 **Custom Fields** - Map WordPress meta fields to front matter
-- 🌐 **Multisite Ready** - Export entire WordPress networks with per-site organization
-- ⚙️ **Flexible Mapping** - Configure which post types and fields to export
-- 📦 **ZIP Download** - Get everything in a single, organized archive
+### 📝 Markdown Conversion
+- Clean, readable Markdown from WordPress HTML
+- Proper heading hierarchy
+- Code blocks, lists, blockquotes preserved
+- Links and images converted correctly
 
-## Requirements
+### 🏷️ Taxonomies & Metadata
+- Categories, tags, and custom taxonomies exported to front matter
+- Choose slug or name format
+- Configure custom front matter keys
 
-- WordPress 5.8 or higher
-- PHP 8.0 or higher
-- Node.js 18+ (for building from source)
+### 🎨 Advanced Custom Fields
+- Full ACF support (text, number, boolean, dates)
+- Image, gallery, and file fields (media collected automatically)
+- Relationships, post objects, repeaters, groups, flexible content
+- Automatic type detection and conversion
+
+### 📸 Media Management
+- All images, videos, and attachments collected
+- URLs rewritten to local paths
+- Organized per-post media folders
+- Featured images preserved
+
+### 🌐 Multisite Networks
+- Export entire networks at once
+- Per-site configuration respected
+- Organized folder structure
+- Subsite selection control
+
+### ⚙️ Custom Field Mapping
+- Map any post meta to front matter
+- Configure field names and types
+- Automatic type coercion
+
+---
 
 ## Installation
 
-### From Release
+### From GitHub Release (Recommended)
 
-1. Download the latest release ZIP from [Releases](../../releases)
-2. Go to WordPress Admin → Plugins → Add New → Upload Plugin
+1. Download the latest release ZIP from [Releases](https://github.com/krstivoja/frontpress-md-exporter/releases)
+2. Go to **WordPress Admin → Plugins → Add New → Upload Plugin**
 3. Upload the ZIP file and activate
 
-### From Source
+### Requirements
 
-```bash
-git clone https://github.com/yourusername/frontpress-md-exporter.git
-cd frontpress-md-exporter
-npm install
-composer install
-npm run build
-```
+- WordPress 5.8+
+- PHP 8.0+
+- Multisite support (optional, for network exports)
 
-## Usage
+---
+
+## Quick Start
 
 ### Single Site Export
 
 1. Go to **WordPress Admin → MD Export**
-2. Configure which post types to export in the **Post Types** tab
-3. Map taxonomies in the **Taxonomies** tab
-4. Configure ACF fields (if using ACF) in the **ACF** tab
-5. Add custom meta field mappings in the **Meta / Fields** tab
+2. **Post Types tab**: Choose which post types to export (posts, pages, products, etc.)
+3. **Taxonomies tab**: Select which taxonomies to include (categories, tags, etc.)
+4. **ACF tab**: Configure Advanced Custom Fields (if using ACF)
+5. **Meta / Fields tab**: Map custom meta fields to front matter
 6. Click **Run Export** and download your ZIP
 
 ### Multisite Network Export
 
 1. Go to **Network Admin → MD Export**
-2. Select which subsites to include
+2. Select which subsites to export
 3. Click **Start Export**
-4. Download the network-wide ZIP
+4. Download the complete network ZIP
 
-Each subsite uses its own configured settings from the individual site's admin panel.
+Each subsite uses its own configuration from the individual site's admin panel.
 
-## Export Structure
+---
 
-### Single Site
+## Export Output
+
+### Single Site Structure
 
 ```
 site/
-├── config.json
+├── config.json              # Export metadata
 └── content/
-    ├── blog/                  # Posts (configurable folder name)
+    ├── blog/                # Posts (folder name is configurable)
     │   ├── my-post.md
-    │   └── my-post/          # Media for this post
+    │   └── my-post/         # Media files for this post
     │       └── image.jpg
-    ├── pages/                # Pages
+    ├── pages/               # Pages
     │   └── about.md
-    └── products/             # Custom post type
+    └── products/            # Custom post type
         └── product-1.md
 ```
 
-### Multisite Network
+### Multisite Network Structure
 
 ```
 site/
 ├── config.json
 └── content/
-    ├── site-1/               # First subsite
+    ├── site-1/              # First subsite
     │   ├── blog/
     │   ├── pages/
     │   └── products/
-    ├── marketing/            # Second subsite
+    ├── marketing/           # Second subsite
     │   ├── blog/
     │   └── pages/
-    └── support/              # Third subsite
+    └── support/             # Third subsite
         └── docs/
 ```
 
-## Markdown Format
+### Markdown File Format
 
-Each exported post becomes a Markdown file with YAML front matter:
+Each post becomes a Markdown file with YAML front matter:
 
 ```markdown
 ---
-title: "My Blog Post"
-slug: my-blog-post
+title: "Getting Started with WordPress"
+slug: getting-started-with-wordpress
 date: 2024-01-15T10:30:00+00:00
 author: admin
 status: publish
 categories:
-  - tech
+  - tutorials
   - wordpress
 tags:
-  - markdown
-  - export
-featured_image: /uploads/blog/my-blog-post/featured.jpg
-custom_field: "Custom value from ACF or meta"
+  - beginner
+  - guide
+featured_image: /uploads/blog/getting-started/featured.jpg
+excerpt: "Learn the basics of WordPress in this beginner-friendly guide."
 ---
 
-# My Blog Post
+# Getting Started with WordPress
 
-Post content converted to clean Markdown...
+WordPress is a powerful content management system...
 
-![Image](/uploads/blog/my-blog-post/image.jpg)
+![Dashboard Screenshot](/uploads/blog/getting-started/dashboard.jpg)
 ```
 
-## Configuration
+---
+
+## Configuration Guide
 
 ### Post Types
 
-Configure which post types to export and their output folder names:
+Control which content types to export:
 
 - **Include** - Enable/disable export for this post type
-- **Folder** - Output directory name (e.g., "blog" for posts, "pages" for pages)
+- **Folder** - Output directory name (e.g., "blog" for posts, "docs" for custom type)
 
 ### Taxonomies
 
 Map WordPress taxonomies to front matter fields:
 
 - **Include** - Export this taxonomy
-- **Target** - Front matter key name
-- **Value Format** - Slugs or names
+- **Target** - Front matter key name (e.g., "categories", "topics")
+- **Value Format** - Use slugs or display names
 
 ### ACF Fields
 
-Map ACF fields to front matter with automatic type detection:
+Configure how ACF fields appear in front matter:
 
-- Text, number, boolean fields
-- Image/file/gallery (media collection)
-- Relationships, post objects
-- Repeaters, groups, flexible content
+- Automatic type detection (text, number, boolean, dates)
+- Media fields trigger automatic file collection
+- Relationships and post objects preserved
+- Nested fields (repeaters, groups) supported
 
-### Meta Fields
+### Custom Meta Fields
 
-Map custom post meta to front matter:
+Map any post meta to front matter:
 
-- Configure field name and target key
-- Automatic type coercion
+- Specify source meta key and target front matter key
+- Automatic type detection and coercion
 
-## Development
+---
 
-### Build
+## Support & Documentation
 
-```bash
-npm run build          # Production build
-npm run dev            # Development build with watch
-```
+- **Issues**: [GitHub Issues](https://github.com/krstivoja/frontpress-md-exporter/issues)
+- **Development**: See [DEV.md](DEV.md) for technical documentation
+- **Website**: [DPlugins](https://dplugins.com)
 
-### Dependencies
+---
 
-- **PHP**: PSR-4 autoloading via Composer
-- **JavaScript**: React, esbuild
-- **Markdown**: league/html-to-markdown
-- **YAML**: symfony/yaml
+## Credits
 
-## Release Process
+Built by **[Marko Krstić](https://markokrstic.com)** · Part of the **[DPlugins](https://dplugins.com)** family
 
-Releases are automated via GitHub Actions:
-
-1. Update version in `frontpress-md-exporter.php`
-2. Commit changes
-3. Create and push a tag:
-   ```bash
-   git tag 0.2.0
-   git push origin 0.2.0
-   ```
-4. GitHub Actions will automatically:
-   - Build assets
-   - Create a release ZIP
-   - Publish the release
-
-## Contributing
-
-Contributions are welcome! Please:
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+---
 
 ## License
 
 GPL-2.0-or-later
-
-## Credits
-
-Built by [Marko Krstić](https://markokrstic.com) · [DPlugins](https://dplugins.com)
-
-Part of the FanCoolo plugin family.

@@ -31,11 +31,7 @@ final class AjaxHandler
             $statusCode = 500;
         }
 
-        error_log('AJAX: Sending JSON (' . strlen($json) . ' bytes)');
-
         // Clear ALL output buffers that WordPress might have created
-        $levels = ob_get_level();
-        error_log('AJAX: Clearing ' . $levels . ' output buffer levels');
         while (ob_get_level() > 0) {
             ob_end_clean();
         }
@@ -48,24 +44,18 @@ final class AjaxHandler
 
         // Flush output to browser
         if (function_exists('fastcgi_finish_request')) {
-            error_log('AJAX: Calling fastcgi_finish_request()');
             fastcgi_finish_request();
         } else {
-            error_log('AJAX: Calling flush()');
             flush();
         }
 
-        error_log('AJAX: Response sent, exiting');
         exit;
     }
 
     public function start(): void
     {
-        error_log('AJAX: Network export start called');
-
         // Security check
         if (!is_multisite() || !current_user_can('manage_network')) {
-            error_log('AJAX: Permission denied');
             $this->sendJson(['success' => false, 'data' => ['message' => 'Permission denied']], 403);
         }
 
@@ -77,36 +67,26 @@ final class AjaxHandler
             ? array_map('intval', $_POST['site_ids'])
             : [];
 
-        error_log('AJAX: Site IDs: ' . implode(', ', $ids));
-
         if (empty($ids)) {
-            error_log('AJAX: No sites selected');
             $this->sendJson(['success' => false, 'data' => ['message' => 'No sites selected']], 400);
         }
 
         try {
             $result = Exporter::start($ids);
-            error_log('AJAX: Export started, result: ' . print_r($result, true));
         } catch (\Throwable $e) {
-            error_log('AJAX: Export start failed: ' . $e->getMessage());
             $this->sendJson(['success' => false, 'data' => ['message' => $e->getMessage()]], 500);
         }
 
         if (isset($result['error'])) {
-            error_log('AJAX: Export returned error');
             $this->sendJson(['success' => false, 'data' => $result], 400);
         }
 
-        error_log('AJAX: Sending success response');
         $this->sendJson(['success' => true, 'data' => $result]);
     }
 
     public function tick(): void
     {
-        error_log('AJAX: tick() called');
-
         if (!is_multisite() || !current_user_can('manage_network')) {
-            error_log('AJAX: tick() permission denied');
             $this->sendJson(['success' => false, 'data' => ['message' => 'Permission denied']], 403);
         }
 
@@ -125,7 +105,6 @@ final class AjaxHandler
             $exp = new Exporter($runId);
             $result = $exp->tick($batch);
         } catch (\Throwable $e) {
-            error_log('AJAX: tick() failed: ' . $e->getMessage());
             $this->sendJson(['success' => false, 'data' => ['message' => $e->getMessage()]], 500);
         }
 
@@ -156,7 +135,6 @@ final class AjaxHandler
             $exp = new Exporter($runId);
             $result = $exp->finalize();
         } catch (\Throwable $e) {
-            error_log('AJAX: finalize() failed: ' . $e->getMessage());
             $this->sendJson(['success' => false, 'data' => ['message' => $e->getMessage()]], 500);
         }
 
