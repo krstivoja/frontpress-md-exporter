@@ -37,6 +37,23 @@ final class Plugin
             return $result;
         }, 10, 3);
 
+        // Debug after WordPress prepares the response
+        add_filter('rest_post_dispatch', static function ($response, $server, $request) {
+            $route = $request->get_route();
+            if ($route && strpos($route, 'network/start') !== false) {
+                error_log('REST post_dispatch - Response status: ' . $response->get_status());
+                error_log('REST post_dispatch - Response headers: ' . json_encode($response->get_headers()));
+                $data = $response->get_data();
+                error_log('REST post_dispatch - Response data size: ' . strlen(json_encode($data)) . ' bytes');
+
+                // Force flush output
+                if (function_exists('fastcgi_finish_request')) {
+                    error_log('Using fastcgi_finish_request');
+                }
+            }
+            return $response;
+        }, 10, 3);
+
         add_action('rest_api_init', static function (): void {
             (new InventoryController())->register();
             (new SettingsController())->register();

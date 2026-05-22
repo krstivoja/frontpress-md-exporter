@@ -141,7 +141,9 @@ final class ExportController
             $result = Exporter::start($ids);
             error_log('Export started successfully');
             error_log('Result: ' . print_r($result, true));
-            error_log('Result JSON size: ' . strlen(json_encode($result)) . ' bytes');
+
+            $json = wp_json_encode($result);
+            error_log('Result JSON size: ' . strlen($json) . ' bytes');
 
             if (isset($result['error'])) {
                 ob_end_clean();
@@ -155,6 +157,20 @@ final class ExportController
             }
 
             error_log('About to return WP_REST_Response');
+
+            // Try direct output as a workaround for server configuration issue
+            if (headers_sent($file, $line)) {
+                error_log("WARNING: Headers already sent at {$file}:{$line}");
+            } else {
+                error_log('Headers not sent yet, attempting direct output');
+                // Send explicit headers
+                header('Content-Type: application/json; charset=UTF-8');
+                header('Content-Length: ' . strlen($json));
+                echo $json;
+                error_log('Direct output sent, exiting');
+                exit;
+            }
+
             return new WP_REST_Response($result);
         } catch (\Throwable $e) {
             // Discard any buffered output
