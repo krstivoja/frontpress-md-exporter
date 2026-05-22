@@ -13,7 +13,7 @@ build.js
 esbuild.config.js
 
 # Source files (we include built dist/)
-src
+/src
 
 # Composer dev dependencies
 composer.lock
