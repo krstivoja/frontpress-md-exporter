@@ -137,7 +137,7 @@ final class Exporter
     {
         $state = $this->readState();
         if ($state === null) {
-            return ['error' => 'unknown_run'];
+            return ['error' => 'unknown_run', 'message' => 'Export run not found. Start a new export and try again.'];
         }
 
         $body      = new BodyConverter();
@@ -206,10 +206,10 @@ final class Exporter
     {
         $state = $this->readState();
         if ($state === null) {
-            return ['error' => 'unknown_run'];
+            return ['error' => 'unknown_run', 'message' => 'Export run not found. Start a new export and try again.'];
         }
         if ($state['site_cursor'] < count($state['subsites'])) {
-            return ['error' => 'not_finished'];
+            return ['error' => 'not_finished', 'message' => 'Export is not finished yet.'];
         }
 
         // Build one merged config.json

@@ -24,6 +24,10 @@ final class BodyConverter
     private function converter(): HtmlConverter
     {
         if ($this->converter === null) {
+            if (!@class_exists(HtmlConverter::class)) {
+                throw new \RuntimeException('The HTML-to-Markdown dependency is missing. Run composer install for FrontPress MD Exporter.');
+            }
+
             $this->converter = new HtmlConverter([
                 'strip_tags'      => false,
                 'header_style'    => 'atx',
