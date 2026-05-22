@@ -6,6 +6,7 @@ namespace FrontPressMdExp;
 
 use FrontPressMdExp\Admin\SettingsPage;
 use FrontPressMdExp\Network\AdminPage as NetworkAdminPage;
+use FrontPressMdExp\Network\AjaxHandler;
 use FrontPressMdExp\Network\ExportController as NetworkExportController;
 use FrontPressMdExp\Rest\ExportController;
 use FrontPressMdExp\Rest\InventoryController;
@@ -72,6 +73,7 @@ final class Plugin
             (new ExportController())->register();
             if (is_multisite()) {
                 (new NetworkExportController())->register();
+                (new AjaxHandler())->register();
             }
         });
 

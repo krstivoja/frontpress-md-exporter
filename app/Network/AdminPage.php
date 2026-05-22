@@ -59,8 +59,10 @@ final class AdminPage
         }
 
         wp_localize_script('fps-mdexp-network', 'fpsExporter', [
-            'restRoot' => esc_url_raw(rest_url(Plugin::REST_NAMESPACE . '/')),
-            'nonce'    => wp_create_nonce('wp_rest'),
+            'restRoot'  => esc_url_raw(rest_url(Plugin::REST_NAMESPACE . '/')),
+            'nonce'     => wp_create_nonce('wp_rest'),
+            'ajaxUrl'   => esc_url_raw(admin_url('admin-ajax.php')),
+            'ajaxNonce' => wp_create_nonce('fps-mdexp-ajax'),
         ]);
     }
 

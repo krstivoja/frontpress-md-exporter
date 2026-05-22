@@ -5,7 +5,43 @@ import '../admin/styles.css';
 const cfg = (typeof window !== 'undefined' && window.fpsExporter) || {
   restRoot: '/wp-json/fps-mdexp/v1/',
   nonce: '',
+  ajaxUrl: '/wp-admin/admin-ajax.php',
+  ajaxNonce: '',
 };
+
+// Use admin-ajax.php instead of REST API (CloudPanel/ModSecurity workaround)
+async function ajaxRequest(action, data = {}) {
+  const formData = new FormData();
+  formData.append('action', action);
+  formData.append('nonce', cfg.ajaxNonce);
+
+  Object.keys(data).forEach(key => {
+    if (Array.isArray(data[key])) {
+      data[key].forEach(val => formData.append(`${key}[]`, val));
+    } else {
+      formData.append(key, data[key]);
+    }
+  });
+
+  const res = await fetch(cfg.ajaxUrl, {
+    method: 'POST',
+    credentials: 'same-origin',
+    body: formData,
+  });
+
+  const text = await res.text();
+
+  try {
+    const json = JSON.parse(text);
+    if (!json.success) {
+      throw new Error(json.data?.message || 'Request failed');
+    }
+    return json.data;
+  } catch (e) {
+    console.error('AJAX response error:', text);
+    throw new Error(e.message || 'Invalid server response');
+  }
+}
 
 async function request(path, { method = 'GET', body } = {}) {
   const res = await fetch(cfg.restRoot + path.replace(/^\//, ''), {
@@ -75,12 +111,8 @@ function App() {
       return;
     }
     try {
-      const begin = await request('network/start', { method: 'POST', body: { site_ids: ids } });
-      if (begin.error) {
-        const msg = begin.message || begin.error;
-        const details = begin.details ? '\n\n' + begin.details.join('\n') : '';
-        throw new Error(msg + details);
-      }
+      // Use AJAX instead of REST API (CloudPanel/ModSecurity workaround)
+      const begin = await ajaxRequest('fps_network_start', { site_ids: ids });
 
       // Show warnings if any sites failed but export can continue
       if (begin.warnings && begin.warnings.length > 0) {
@@ -92,18 +124,11 @@ function App() {
       const runId = begin.run_id;
       let done = false;
       while (!done) {
-        const r = await request(
-          `network/tick?run_id=${encodeURIComponent(runId)}&batch=20`,
-          { method: 'POST' }
-        );
+        const r = await ajaxRequest('fps_network_tick', { run_id: runId, batch: 20 });
         done = !!r.done;
         setProgress({ processed: r.processed, total: r.total });
       }
-      const fin = await request(
-        `network/finalize?run_id=${encodeURIComponent(runId)}`,
-        { method: 'POST' }
-      );
-      if (fin.error) throw new Error(fin.message || fin.error);
+      const fin = await ajaxRequest('fps_network_finalize', { run_id: runId });
 
       const url = `${cfg.restRoot}network/download?run_id=${encodeURIComponent(runId)}&token=${encodeURIComponent(fin.token)}&_wpnonce=${encodeURIComponent(cfg.nonce)}`;
       setDownload({ url, filename: fin.filename, size: fin.size });
