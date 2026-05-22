@@ -1,0 +1,20 @@
+{
+  "name": "marko/frontpress-md-exporter",
+  "description": "Export a WordPress site to markdown files with front matter.",
+  "type": "wordpress-plugin",
+  "license": "GPL-2.0-or-later",
+  "autoload": {
+    "psr-4": {
+      "FrontPressMdExp\\": "app/"
+    }
+  },
+  "require": {
+    "php": ">=8.0",
+    "league/html-to-markdown": "^5.1",
+    "symfony/yaml": "^6.4"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "sort-packages": true
+  }
+}
