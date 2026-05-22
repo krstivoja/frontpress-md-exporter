@@ -25,6 +25,18 @@ final class Plugin
             (new NetworkAdminPage())->register();
         }
 
+        // Debug REST API responses for network export
+        add_filter('rest_pre_echo_response', static function ($result, $server, $request) {
+            $route = $request->get_route();
+            if ($route && strpos($route, 'network/start') !== false) {
+                error_log('REST API about to send response for ' . $route);
+                error_log('Response type: ' . gettype($result));
+                error_log('Response size: ' . strlen(json_encode($result)) . ' bytes');
+                error_log('Response preview: ' . substr(json_encode($result), 0, 500));
+            }
+            return $result;
+        }, 10, 3);
+
         add_action('rest_api_init', static function (): void {
             (new InventoryController())->register();
             (new SettingsController())->register();

@@ -140,13 +140,21 @@ final class ExportController
             error_log('Starting export...');
             $result = Exporter::start($ids);
             error_log('Export started successfully');
+            error_log('Result: ' . print_r($result, true));
+            error_log('Result JSON size: ' . strlen(json_encode($result)) . ' bytes');
 
             if (isset($result['error'])) {
                 ob_end_clean();
                 return new WP_REST_Response($result, 400);
             }
 
-            ob_end_clean();
+            // Check for any buffered output
+            $buffered = ob_get_clean();
+            if ($buffered !== '' && $buffered !== false) {
+                error_log('WARNING: Buffered output detected: ' . substr($buffered, 0, 200));
+            }
+
+            error_log('About to return WP_REST_Response');
             return new WP_REST_Response($result);
         } catch (\Throwable $e) {
             // Discard any buffered output
