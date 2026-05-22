@@ -2,7 +2,7 @@
 /**
  * Plugin Name: FrontPress MD Exporter
  * Description: Export this WordPress site to mdframework-compatible Markdown files (with front matter, taxonomies, and media) as a downloadable zip.
- * Version: 0.1.7
+ * Version: 0.1.8
  * Author: Marko Krstić
  * License: GPL-2.0-or-later
  * Text Domain: frontpress-md-exporter
@@ -17,7 +17,7 @@ if (!defined('ABSPATH')) {
 define('FPS_MDEXP_FILE', __FILE__);
 define('FPS_MDEXP_PATH', plugin_dir_path(__FILE__));
 define('FPS_MDEXP_URL', plugin_dir_url(__FILE__));
-define('FPS_MDEXP_VERSION', '0.1.7');
+define('FPS_MDEXP_VERSION', '0.1.8');
 
 require_once __DIR__ . '/vendor/autoload.php';
 
