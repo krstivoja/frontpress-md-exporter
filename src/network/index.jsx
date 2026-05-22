@@ -76,7 +76,17 @@ function App() {
     }
     try {
       const begin = await request('network/start', { method: 'POST', body: { site_ids: ids } });
-      if (begin.error) throw new Error(begin.error);
+      if (begin.error) {
+        const msg = begin.message || begin.error;
+        const details = begin.details ? '\n\n' + begin.details.join('\n') : '';
+        throw new Error(msg + details);
+      }
+
+      // Show warnings if any sites failed but export can continue
+      if (begin.warnings && begin.warnings.length > 0) {
+        console.warn('Site processing warnings:', begin.warnings);
+      }
+
       setProgress({ processed: 0, total: begin.total });
 
       const runId = begin.run_id;

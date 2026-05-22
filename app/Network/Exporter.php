@@ -63,30 +63,51 @@ final class Exporter
 
         $subsites = [];
         $total    = 0;
+        $errors   = [];
+
         foreach ($subsiteIds as $id) {
             $id   = (int) $id;
             $site = get_site($id);
             if (!$site) {
+                $errors[] = "Site ID {$id} not found";
                 continue;
             }
 
-            switch_to_blog($id);
-            $slug              = self::subsiteSlug($site);
-            $settings          = Mapping::get();
-            $settingsPrefixed  = self::prefixFolders($settings, $slug);
-            $postIds           = self::collectPostIds($settingsPrefixed);
-            restore_current_blog();
+            try {
+                $switched = switch_to_blog($id);
+                if (!$switched) {
+                    $errors[] = "Failed to switch to site {$id}";
+                    continue;
+                }
 
-            $subsites[] = [
-                'id'                => $id,
-                'slug'              => $slug,
-                'post_ids'          => $postIds,
-                'cursor'            => 0,
-                'settings_prefixed' => $settingsPrefixed,
-                'terms_seen'        => [],
-                'used_slugs'        => [],
+                $slug              = self::subsiteSlug($site);
+                $settings          = Mapping::get();
+                $settingsPrefixed  = self::prefixFolders($settings, $slug);
+                $postIds           = self::collectPostIds($settingsPrefixed);
+
+                $subsites[] = [
+                    'id'                => $id,
+                    'slug'              => $slug,
+                    'post_ids'          => $postIds,
+                    'cursor'            => 0,
+                    'settings_prefixed' => $settingsPrefixed,
+                    'terms_seen'        => [],
+                    'used_slugs'        => [],
+                ];
+                $total += count($postIds);
+            } catch (\Throwable $e) {
+                $errors[] = "Site {$id}: " . $e->getMessage();
+            } finally {
+                restore_current_blog();
+            }
+        }
+
+        if (empty($subsites)) {
+            return [
+                'error' => 'no_valid_sites',
+                'message' => 'No valid sites could be processed.',
+                'details' => $errors,
             ];
-            $total += count($postIds);
         }
 
         $state = [
@@ -98,6 +119,7 @@ final class Exporter
             'download_token' => null,
             'zip_filename'   => null,
             'started_at'     => time(),
+            'errors'         => $errors,
         ];
         $self->writeState($state);
 
@@ -107,6 +129,7 @@ final class Exporter
             'subsites' => array_map(static fn($s) => [
                 'id' => $s['id'], 'slug' => $s['slug'], 'count' => count($s['post_ids']),
             ], $subsites),
+            'warnings' => !empty($errors) ? $errors : null,
         ];
     }
 

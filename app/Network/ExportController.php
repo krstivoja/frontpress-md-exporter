@@ -90,9 +90,23 @@ final class ExportController
     {
         @set_time_limit(0);
 
+        // Force error output for debugging
+        if (defined('WP_DEBUG') && WP_DEBUG) {
+            error_reporting(E_ALL);
+            ini_set('display_errors', '1');
+        }
+
         try {
             $body  = $req->get_json_params();
-            $ids   = is_array($body['site_ids'] ?? null) ? array_map('intval', $body['site_ids']) : [];
+
+            if (!is_array($body) || empty($body)) {
+                return new WP_REST_Response([
+                    'error' => 'invalid_request',
+                    'message' => 'Invalid request body.',
+                ], 400);
+            }
+
+            $ids = is_array($body['site_ids'] ?? null) ? array_map('intval', $body['site_ids']) : [];
 
             if (empty($ids)) {
                 return new WP_REST_Response([
@@ -101,12 +115,35 @@ final class ExportController
                 ], 400);
             }
 
+            // Validate site IDs exist before attempting export
+            foreach ($ids as $id) {
+                $site = get_site($id);
+                if (!$site) {
+                    return new WP_REST_Response([
+                        'error' => 'invalid_site',
+                        'message' => "Site ID {$id} does not exist.",
+                    ], 400);
+                }
+            }
+
             $result = Exporter::start($ids);
+
+            if (isset($result['error'])) {
+                return new WP_REST_Response($result, 400);
+            }
+
             return new WP_REST_Response($result);
         } catch (\Throwable $e) {
+            // Log the error for debugging
+            if (function_exists('error_log')) {
+                error_log('Network export start failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            }
+
             return new WP_REST_Response([
                 'error' => 'export_failed',
                 'message' => $e->getMessage(),
+                'file' => WP_DEBUG ? $e->getFile() : null,
+                'line' => WP_DEBUG ? $e->getLine() : null,
                 'trace' => WP_DEBUG ? $e->getTraceAsString() : null,
             ], 500);
         }
