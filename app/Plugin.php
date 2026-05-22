@@ -45,14 +45,26 @@ final class Plugin
                 error_log('REST post_dispatch - Response headers: ' . json_encode($response->get_headers()));
                 $data = $response->get_data();
                 error_log('REST post_dispatch - Response data size: ' . strlen(json_encode($data)) . ' bytes');
-
-                // Force flush output
-                if (function_exists('fastcgi_finish_request')) {
-                    error_log('Using fastcgi_finish_request');
-                }
+                error_log('REST post_dispatch - Response data preview: ' . substr(json_encode($data), 0, 200));
             }
             return $response;
         }, 10, 3);
+
+        // Catch any shutdown errors during network export
+        register_shutdown_function(static function () {
+            $error = error_get_last();
+            if ($error !== null &&
+                ($error['type'] === E_ERROR ||
+                 $error['type'] === E_PARSE ||
+                 $error['type'] === E_CORE_ERROR ||
+                 $error['type'] === E_COMPILE_ERROR)) {
+
+                // Check if this was during a network export request
+                if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'network/start') !== false) {
+                    error_log('FATAL ERROR during network export: ' . print_r($error, true));
+                }
+            }
+        });
 
         add_action('rest_api_init', static function (): void {
             (new InventoryController())->register();

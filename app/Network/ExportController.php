@@ -154,24 +154,21 @@ final class ExportController
             $buffered = ob_get_clean();
             if ($buffered !== '' && $buffered !== false) {
                 error_log('WARNING: Buffered output detected: ' . substr($buffered, 0, 200));
-            }
-
-            error_log('About to return WP_REST_Response');
-
-            // Try direct output as a workaround for server configuration issue
-            if (headers_sent($file, $line)) {
-                error_log("WARNING: Headers already sent at {$file}:{$line}");
             } else {
-                error_log('Headers not sent yet, attempting direct output');
-                // Send explicit headers
-                header('Content-Type: application/json; charset=UTF-8');
-                header('Content-Length: ' . strlen($json));
-                echo $json;
-                error_log('Direct output sent, exiting');
-                exit;
+                error_log('No buffered output detected');
             }
 
-            return new WP_REST_Response($result);
+            error_log('Creating WP_REST_Response object');
+            $response = new WP_REST_Response($result, 200);
+
+            // Set explicit headers to prevent caching/buffering issues
+            $response->header('Content-Type', 'application/json; charset=UTF-8');
+            $response->header('Cache-Control', 'no-cache, must-revalidate, max-age=0');
+            $response->header('X-Content-Type-Options', 'nosniff');
+            $response->header('X-Debug-Size', strlen($json));
+
+            error_log('About to return response with headers');
+            return $response;
         } catch (\Throwable $e) {
             // Discard any buffered output
             ob_end_clean();
