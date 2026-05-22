@@ -184,6 +184,28 @@ Network export logs are visible in PHP error logs:
 tail -f /path/to/error.log
 ```
 
+## Security Considerations
+
+### Folder Path Sanitization (v0.3.0+)
+
+Folder paths from user settings are sanitized to prevent directory traversal attacks:
+
+- `Mapping.php` and `PostFormatter.php` use `sanitizeFolder()` method
+- Strips path separators (`/`, `\`), traversal attempts (`..`, `.`)
+- Only allows alphanumeric characters, dash, and underscore
+- Defaults to `'content'` if sanitization results in empty string
+
+**Example**: User input `../../etc/passwd` becomes `etcpasswd`
+
+### Multisite Folder Structure (v0.3.0+)
+
+Multisite exports use flat folder structure to prevent routing conflicts:
+
+- **Old (vulnerable)**: `content/site-1/blog/` (nested paths can bypass validation)
+- **New (safe)**: `content/site-1-blog/` (flat, single segment)
+
+This ensures compatibility with CMS routing that expects `/:folder/:slug` and prevents path confusion attacks.
+
 ## Common Issues
 
 ### "HTML-to-Markdown dependency is missing"
