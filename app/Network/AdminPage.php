@@ -31,7 +31,13 @@ final class AdminPage
 
     public function enqueueAssets(string $hook): void
     {
-        if ($hook !== 'toplevel_page_' . self::MENU_SLUG . '-network') {
+        // Network admin pages don't have the '-network' suffix in the hook
+        if (!is_network_admin()) {
+            return;
+        }
+
+        $expectedHook = 'toplevel_page_' . self::MENU_SLUG;
+        if ($hook !== $expectedHook) {
             return;
         }
 
