@@ -19,6 +19,24 @@ final class AjaxHandler
         add_action('wp_ajax_fps_network_finalize', [$this, 'finalize']);
     }
 
+    /**
+     * Send JSON response directly (bypass WordPress buffering)
+     * Same approach as the working test-ajax.php file
+     */
+    private function sendJson(array $data, int $statusCode = 200): void
+    {
+        $json = wp_json_encode($data);
+        error_log('AJAX: Sending JSON (' . strlen($json) . ' bytes)');
+
+        status_header($statusCode);
+        header('Content-Type: application/json; charset=UTF-8');
+        header('Content-Length: ' . strlen($json));
+        echo $json;
+
+        error_log('AJAX: Response sent, exiting');
+        exit;
+    }
+
     public function start(): void
     {
         error_log('AJAX: Network export start called');
@@ -26,7 +44,7 @@ final class AjaxHandler
         // Security check
         if (!is_multisite() || !current_user_can('manage_network')) {
             error_log('AJAX: Permission denied');
-            wp_send_json_error(['message' => 'Permission denied'], 403);
+            $this->sendJson(['success' => false, 'data' => ['message' => 'Permission denied']], 403);
         }
 
         check_ajax_referer('fps-mdexp-ajax', 'nonce');
@@ -39,7 +57,7 @@ final class AjaxHandler
 
         if (empty($ids)) {
             error_log('AJAX: No sites selected');
-            wp_send_json_error(['message' => 'No sites selected'], 400);
+            $this->sendJson(['success' => false, 'data' => ['message' => 'No sites selected']], 400);
         }
 
         $result = Exporter::start($ids);
@@ -47,17 +65,17 @@ final class AjaxHandler
 
         if (isset($result['error'])) {
             error_log('AJAX: Export returned error');
-            wp_send_json_error($result, 400);
+            $this->sendJson(['success' => false, 'data' => $result], 400);
         }
 
         error_log('AJAX: Sending success response');
-        wp_send_json_success($result);
+        $this->sendJson(['success' => true, 'data' => $result]);
     }
 
     public function tick(): void
     {
         if (!is_multisite() || !current_user_can('manage_network')) {
-            wp_send_json_error(['message' => 'Permission denied'], 403);
+            $this->sendJson(['success' => false, 'data' => ['message' => 'Permission denied']], 403);
         }
 
         check_ajax_referer('fps-mdexp-ajax', 'nonce');
@@ -66,19 +84,19 @@ final class AjaxHandler
         $batch = isset($_POST['batch']) ? (int) $_POST['batch'] : 20;
 
         if (empty($runId)) {
-            wp_send_json_error(['message' => 'Missing run_id'], 400);
+            $this->sendJson(['success' => false, 'data' => ['message' => 'Missing run_id']], 400);
         }
 
         $exp = new Exporter($runId);
         $result = $exp->tick($batch);
 
-        wp_send_json_success($result);
+        $this->sendJson(['success' => true, 'data' => $result]);
     }
 
     public function finalize(): void
     {
         if (!is_multisite() || !current_user_can('manage_network')) {
-            wp_send_json_error(['message' => 'Permission denied'], 403);
+            $this->sendJson(['success' => false, 'data' => ['message' => 'Permission denied']], 403);
         }
 
         check_ajax_referer('fps-mdexp-ajax', 'nonce');
@@ -86,16 +104,16 @@ final class AjaxHandler
         $runId = isset($_POST['run_id']) ? sanitize_text_field($_POST['run_id']) : '';
 
         if (empty($runId)) {
-            wp_send_json_error(['message' => 'Missing run_id'], 400);
+            $this->sendJson(['success' => false, 'data' => ['message' => 'Missing run_id']], 400);
         }
 
         $exp = new Exporter($runId);
         $result = $exp->finalize();
 
         if (isset($result['error'])) {
-            wp_send_json_error($result, 400);
+            $this->sendJson(['success' => false, 'data' => $result], 400);
         }
 
-        wp_send_json_success($result);
+        $this->sendJson(['success' => true, 'data' => $result]);
     }
 }
