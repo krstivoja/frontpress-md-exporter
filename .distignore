@@ -1,0 +1,41 @@
+# Development files
+.git
+.github
+.gitignore
+.distignore
+
+# Node.js
+node_modules
+package-lock.json
+
+# Build tools
+build.js
+esbuild.config.js
+
+# Source files (we include built dist/)
+src
+
+# Composer dev dependencies
+composer.lock
+
+# IDE
+.vscode
+.idea
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Documentation (development)
+CLAUDE.md
+
+# Testing
+tests
+phpunit.xml
+.phpunit.result.cache
+
+# Misc
+*.log
+.env

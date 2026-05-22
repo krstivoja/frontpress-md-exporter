@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          tools: composer
+
+      - name: Install dependencies
+        run: |
+          npm ci
+          composer install --no-dev --optimize-autoloader
+
+      - name: Build assets
+        run: npm run build
+
+      - name: Create release archive
+        run: |
+          # Read version from tag
+          VERSION=${GITHUB_REF#refs/tags/}
+
+          # Create release directory
+          mkdir -p release
+
+          # Copy plugin files (excluding development files)
+          rsync -av --exclude-from='.distignore' \
+            --exclude='release' \
+            --exclude='.git' \
+            --exclude='.github' \
+            ./ release/frontpress-md-exporter/
+
+          # Create zip
+          cd release
+          zip -r "frontpress-md-exporter-${VERSION}.zip" frontpress-md-exporter/
+          cd ..
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: release/*.zip
+          generate_release_notes: true
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

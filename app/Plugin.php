@@ -34,6 +34,7 @@ final class Plugin
             }
         });
 
+        // Plugin action links for single site or subsite admin
         add_filter('plugin_action_links_' . plugin_basename(FPS_MDEXP_FILE), static function (array $links): array {
             $settingsLink = sprintf(
                 '<a href="%s">%s</a>',
@@ -43,5 +44,18 @@ final class Plugin
             array_unshift($links, $settingsLink);
             return $links;
         });
+
+        // Plugin action links for network admin (multisite)
+        if (is_multisite()) {
+            add_filter('network_admin_plugin_action_links_' . plugin_basename(FPS_MDEXP_FILE), static function (array $links): array {
+                $networkLink = sprintf(
+                    '<a href="%s">%s</a>',
+                    esc_url(network_admin_url('admin.php?page=' . NetworkAdminPage::MENU_SLUG)),
+                    esc_html__('Network Export', 'frontpress-md-exporter')
+                );
+                array_unshift($links, $networkLink);
+                return $links;
+            });
+        }
     }
 }
