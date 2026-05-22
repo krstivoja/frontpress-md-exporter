@@ -67,13 +67,17 @@ final class Plugin
             }
         });
 
+        // Register AJAX handlers (must be outside rest_api_init)
+        if (is_multisite()) {
+            (new AjaxHandler())->register();
+        }
+
         add_action('rest_api_init', static function (): void {
             (new InventoryController())->register();
             (new SettingsController())->register();
             (new ExportController())->register();
             if (is_multisite()) {
                 (new NetworkExportController())->register();
-                (new AjaxHandler())->register();
             }
         });
 
