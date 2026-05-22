@@ -89,9 +89,27 @@ final class ExportController
     public function start(WP_REST_Request $req): WP_REST_Response
     {
         @set_time_limit(0);
-        $body  = $req->get_json_params();
-        $ids   = is_array($body['site_ids'] ?? null) ? array_map('intval', $body['site_ids']) : [];
-        return new WP_REST_Response(Exporter::start($ids));
+
+        try {
+            $body  = $req->get_json_params();
+            $ids   = is_array($body['site_ids'] ?? null) ? array_map('intval', $body['site_ids']) : [];
+
+            if (empty($ids)) {
+                return new WP_REST_Response([
+                    'error' => 'no_sites_selected',
+                    'message' => 'Please select at least one site to export.',
+                ], 400);
+            }
+
+            $result = Exporter::start($ids);
+            return new WP_REST_Response($result);
+        } catch (\Throwable $e) {
+            return new WP_REST_Response([
+                'error' => 'export_failed',
+                'message' => $e->getMessage(),
+                'trace' => WP_DEBUG ? $e->getTraceAsString() : null,
+            ], 500);
+        }
     }
 
     public function tick(WP_REST_Request $req): WP_REST_Response

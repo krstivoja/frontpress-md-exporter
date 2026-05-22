@@ -17,13 +17,22 @@ async function request(path, { method = 'GET', body } = {}) {
     },
     body: body ? JSON.stringify(body) : undefined,
   });
+
+  const text = await res.text();
+
   if (!res.ok) {
     let payload = null;
-    try { payload = await res.json(); } catch (e) {}
+    try { payload = JSON.parse(text); } catch (e) {}
     const message = (payload && payload.message) || `${res.status} ${res.statusText}`;
     throw new Error(message);
   }
-  return res.json();
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error('Invalid JSON response:', text);
+    throw new Error('Invalid server response. Check console for details.');
+  }
 }
 
 function App() {
