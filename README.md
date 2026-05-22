@@ -75,21 +75,25 @@ Move content between WordPress sites, platforms, or systems. Export once, import
 ## Installation
 
 ### From GitHub Release (Recommended)
+### Multisite Network Structure
 
-1. Download the latest release ZIP from [Releases](https://github.com/krstivoja/frontpress-md-exporter/releases)
-2. Go to **WordPress Admin → Plugins → Add New → Upload Plugin**
-3. Upload the ZIP file and activate
+```
+site/
+├── config.json
+└── content/
+    ├── site-1-blog/         # First subsite blog posts
+    │   └── my-post.md
+    ├── site-1-pages/        # First subsite pages
+    │   └── about.md
+    ├── marketing-blog/      # Second subsite blog
+    │   └── announcement.md
+    ├── marketing-pages/     # Second subsite pages
+    │   └── home.md
+    └── support-docs/        # Third subsite docs
+        └── guide.md
+```
 
-### Requirements
-
-- WordPress 5.8+
-- PHP 8.0+
-- Multisite support (optional, for network exports)
-
----
-
-## Quick Start
-
+**Note**: Multisite exports use a flat folder structure with subsite prefix (e.g., `marketing-blog`) rather than nested folders. This ensures compatibility with CMS routing that expects `/:folder/:slug` as a single path segment.
 ### Single Site Export
 
 1. Go to **WordPress Admin → MD Export**

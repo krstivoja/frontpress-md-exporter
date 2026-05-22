@@ -24,51 +24,6 @@ final class Plugin
 
         if (is_multisite()) {
             (new NetworkAdminPage())->register();
-        }
-
-        // Debug REST API responses for network export
-        add_filter('rest_pre_echo_response', static function ($result, $server, $request) {
-            $route = $request->get_route();
-            if ($route && strpos($route, 'network/start') !== false) {
-                error_log('REST API about to send response for ' . $route);
-                error_log('Response type: ' . gettype($result));
-                error_log('Response size: ' . strlen(json_encode($result)) . ' bytes');
-                error_log('Response preview: ' . substr(json_encode($result), 0, 500));
-            }
-            return $result;
-        }, 10, 3);
-
-        // Debug after WordPress prepares the response
-        add_filter('rest_post_dispatch', static function ($response, $server, $request) {
-            $route = $request->get_route();
-            if ($route && strpos($route, 'network/start') !== false) {
-                error_log('REST post_dispatch - Response status: ' . $response->get_status());
-                error_log('REST post_dispatch - Response headers: ' . json_encode($response->get_headers()));
-                $data = $response->get_data();
-                error_log('REST post_dispatch - Response data size: ' . strlen(json_encode($data)) . ' bytes');
-                error_log('REST post_dispatch - Response data preview: ' . substr(json_encode($data), 0, 200));
-            }
-            return $response;
-        }, 10, 3);
-
-        // Catch any shutdown errors during network export
-        register_shutdown_function(static function () {
-            $error = error_get_last();
-            if ($error !== null &&
-                ($error['type'] === E_ERROR ||
-                 $error['type'] === E_PARSE ||
-                 $error['type'] === E_CORE_ERROR ||
-                 $error['type'] === E_COMPILE_ERROR)) {
-
-                // Check if this was during a network export request
-                if (isset($_SERVER['REQUEST_URI']) && strpos($_SERVER['REQUEST_URI'], 'network/start') !== false) {
-                    error_log('FATAL ERROR during network export: ' . print_r($error, true));
-                }
-            }
-        });
-
-        // Register AJAX handlers (must be outside rest_api_init)
-        if (is_multisite()) {
             (new AjaxHandler())->register();
         }
 

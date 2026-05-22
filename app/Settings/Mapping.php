@@ -25,7 +25,7 @@ final class Mapping
             };
             $postTypes[$pt->name] = [
                 'include'    => true,
-                'folder'     => $folder,
+                'folder'     => self::sanitizeFolder($folder),
                 'body_mode'  => 'markdown',
                 'label'      => $pt->labels->name ?? $pt->name,
             ];
@@ -77,6 +77,20 @@ final class Mapping
         return $merged;
     }
 
+    /**
+     * Sanitize folder path to prevent directory traversal attacks
+     * Strips slashes, dots, and non-alphanumeric chars (except dash/underscore)
+     */
+    private static function sanitizeFolder(string $folder): string
+    {
+        // Remove path separators and traversal attempts
+        $folder = str_replace(['/', '\\', '..', '.'], '', $folder);
+        // Only allow alphanumeric, dash, underscore
+        $folder = preg_replace('/[^a-z0-9_-]/i', '', $folder);
+        // Default if empty after sanitization
+        return $folder !== '' ? $folder : 'content';
+    }
+
     private static function merge(array $defaults, array $incoming): array
     {
         $out = $defaults;
@@ -88,6 +102,10 @@ final class Mapping
             foreach ($incoming[$section] as $key => $cfg) {
                 if (!isset($out[$section][$key]) || !is_array($cfg)) {
                     continue;
+                }
+                // Sanitize folder value from user input
+                if ($section === 'post_types' && isset($cfg['folder'])) {
+                    $cfg['folder'] = self::sanitizeFolder((string) $cfg['folder']);
                 }
                 $out[$section][$key] = array_merge($out[$section][$key], $cfg);
             }

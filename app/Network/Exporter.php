@@ -14,15 +14,18 @@ use FrontPressMdExp\Helpers\Slug;
 use FrontPressMdExp\Settings\Mapping;
 
 /**
- * Multisite export: every subsite becomes a top-level folder under
- * site/content/<subsite-slug>/, with the user's normal post-type folders
- * (blog, pages, custom) nested inside. Per-post media land in the same
- * tree at site/content/<subsite-slug>/<folder>/<slug>/<basename>, and
- * URLs are written as /uploads/<subsite-slug>/<folder>/<slug>/<basename>.
+ * Multisite export: Uses flat folder structure compatible with CMS routing.
+ * Each subsite's content goes into folders named: <subsite-slug>-<folder>
+ * e.g., "marketing-blog", "support-docs", "site1-pages"
  *
- * Implementation: we reuse the per-site PostFormatter/MediaCollector by
- * pre-prefixing each subsite's mapping["post_types"][*]["folder"] with
- * the subsite slug — no changes needed downstream.
+ * This ensures CMS admin routes (/:folder/:slug) work correctly, as the
+ * folder is the entire first path segment, not a nested path.
+ *
+ * Per-post media land at site/content/<subsite-slug>-<folder>/<slug>/<basename>,
+ * with URLs written as /uploads/<subsite-slug>-<folder>/<slug>/<basename>.
+ *
+ * Implementation: we prefix each subsite's mapping["post_types"][*]["folder"]
+ * with "<subsite-slug>-" instead of creating nested paths.
  *
  * State file layout (run-dir/state.json):
  *   {
@@ -298,11 +301,17 @@ final class Exporter
         file_put_contents($this->runDir . '/state.json', wp_json_encode($state, JSON_UNESCAPED_SLASHES));
     }
 
+    /**
+     * Prefix folder names with subsite slug for flat folder structure
+     * Instead of nested paths (site-1/blog), creates flat folders (site-1-blog)
+     * This makes CMS admin routing work: /:folder/:slug expects folder as single segment
+     */
     private static function prefixFolders(array $settings, string $prefix): array
     {
         foreach ($settings['post_types'] ?? [] as $name => $cfg) {
             $folder = (string) ($cfg['folder'] ?? $name);
-            $settings['post_types'][$name]['folder']      = $prefix . '/' . ltrim($folder, '/');
+            // Use dash separator for flat structure: "marketing-blog" not "marketing/blog"
+            $settings['post_types'][$name]['folder']      = $prefix . '-' . ltrim($folder, '/');
             // Capture taxonomies now (we're inside switch_to_blog) so
             // ConfigBuilder doesn't depend on the active blog at finalize time.
             $settings['post_types'][$name]['_taxonomies'] = array_values(get_object_taxonomies($name));

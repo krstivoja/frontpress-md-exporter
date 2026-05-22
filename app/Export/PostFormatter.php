@@ -29,7 +29,7 @@ final class PostFormatter
     public function format(\WP_Post $post, array $settings, array &$usedSlugs): array
     {
         $ptCfg  = $settings['post_types'][$post->post_type] ?? null;
-        $folder = $ptCfg['folder'] ?? $post->post_type;
+        $folder = $this->sanitizeFolder($ptCfg['folder'] ?? $post->post_type);
         $mode   = $ptCfg['body_mode'] ?? 'markdown';
 
         if (!isset($usedSlugs[$folder]) || !is_array($usedSlugs[$folder])) {
@@ -157,5 +157,17 @@ final class PostFormatter
             return $v;
         }
         return (string) $v;
+    }
+
+    /**
+     * Sanitize folder path to prevent directory traversal
+     */
+    private function sanitizeFolder(string $folder): string
+    {
+        // Remove path separators and traversal attempts
+        $folder = str_replace(['/', '\\', '..', '.'], '', $folder);
+        // Only allow alphanumeric, dash, underscore
+        $folder = preg_replace('/[^a-z0-9_-]/i', '', $folder);
+        return $folder !== '' ? $folder : 'content';
     }
 }
